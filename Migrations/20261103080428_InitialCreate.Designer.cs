@@ -12,8 +12,8 @@ using wt_lab7_7postgres_efcore_zhiznevskaya.Data;
 namespace wt_lab6_6minimalapi_zhiznevskaya.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261102094441_AddCreatedAt")]
-    partial class AddCreatedAt
+    [Migration("20261103080428_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,6 +56,38 @@ namespace wt_lab6_6minimalapi_zhiznevskaya.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cars");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Brand = "Toyota",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsAvailable = true,
+                            Model = "Camry",
+                            PricePerDay = 5000m,
+                            Year = 2022
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Brand = "BMW",
+                            CreatedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsAvailable = true,
+                            Model = "X5",
+                            PricePerDay = 12000m,
+                            Year = 2023
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Brand = "Volvo",
+                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsAvailable = false,
+                            Model = "FH16",
+                            PricePerDay = 18000m,
+                            Year = 2021
+                        });
                 });
 #pragma warning restore 612, 618
         }
