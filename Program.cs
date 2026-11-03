@@ -8,7 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 Console.WriteLine("=== ПРОВЕРКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ===");
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL") ?? builder.Configuration["DATABASE_URL"];
 Console.WriteLine($"DATABASE_URL: '{(string.IsNullOrEmpty(databaseUrl) ? "ПУСТО" : "НАЙДЕНО")}'");
-Console.WriteLine("=======================================");
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -135,5 +134,6 @@ app.MapDelete("/api/cars/{id}", async (int id, AppDbContext db) =>
 });
 
 // ===== Запуск =====
-var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
-app.Run($"http://0.0.0.0:{port}");
+// Используем переменную appPort, чтобы не было конфликта имен
+var appPort = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+app.Run($"http://0.0.0.0:{appPort}");
