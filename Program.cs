@@ -8,17 +8,26 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Для Render: обработка переменной DATABASE_URL
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var databaseUrl = builder.Configuration["DATABASE_URL"] 
+                  ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
 if (!string.IsNullOrWhiteSpace(databaseUrl))
 {
+    // Преобразуем DATABASE_URL (формат postgres://) в строку подключения для Npgsql
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':', 2);
-    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={Uri.UnescapeDataString(userInfo[0])};Password={Uri.UnescapeDataString(userInfo[1])};SSL Mode=Disable";
+    
+    connectionString = $"Host={uri.Host};" +
+                       $"Port={uri.Port};" +
+                       $"Database={uri.AbsolutePath.TrimStart('/')};" +
+                       $"Username={Uri.UnescapeDataString(userInfo[0])};" +
+                       $"Password={Uri.UnescapeDataString(userInfo[1])};" +
+                       $"SSL Mode=Disable"; 
 }
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
-// ===== 2. Swagger =====
+// ===== 2. Настройка Swagger =====
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -28,7 +37,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ===== 4. Автоматическое применение миграций =====
+// ===== 4. Автоматическое применение миграций при запуске =====
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -109,6 +118,7 @@ app.MapDelete("/api/cars/{id}", async (int id, AppDbContext db) =>
     return Results.NoContent();
 });
 
-// ===== 6. Запуск приложения (только в самом конце!) =====
+// ===== 6. Запуск приложения =====
+// На Render приложение должно слушать порт, который передается в переменной PORT
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 app.Run($"http://0.0.0.0:{port}");
