@@ -4,14 +4,13 @@ using wt_lab7_7postgres_efcore_zhiznevskaya.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ===== Подключение к PostgreSQL =====
-// 1. Пробуем взять DATABASE_URL (для Render)
-var databaseUrl = builder.Configuration["DATABASE_URL"];
+// ===== 1. Подключение к PostgreSQL =====
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+// Для Render: обработка переменной DATABASE_URL
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 if (!string.IsNullOrWhiteSpace(databaseUrl))
 {
-    // Если мы на Render, преобразуем DATABASE_URL в строку подключения
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':', 2);
     connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={Uri.UnescapeDataString(userInfo[0])};Password={Uri.UnescapeDataString(userInfo[1])};SSL Mode=Disable";
@@ -19,35 +18,24 @@ if (!string.IsNullOrWhiteSpace(databaseUrl))
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
-// ===== Swagger =====
+// ===== 2. Swagger =====
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ===== Swagger UI =====
+// ===== 3. Swagger UI =====
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ===== Автоматическое применение миграций =====
+// ===== 4. Автоматическое применение миграций =====
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
 
-// ===== Swagger UI =====
-app.UseSwagger();
-app.UseSwaggerUI();
-
-// ===== Автоматическое применение миграций при запуске =====
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
-
-// ===== Эндпоинты =====
+// ===== 5. Эндпоинты =====
 app.MapGet("/", () => "Minimal API работает!");
 
 app.MapGet("/api/info", () => new
@@ -57,9 +45,6 @@ app.MapGet("/api/info", () => new
     Version = "2.0"
 });
 
-// CRUD-эндпоинты добавим на следующем шаге
-
-app.Run();
 // ===== Блок 4: CRUD через EF Core =====
 
 // 1. GET /api/cars — получить список всех машин
@@ -123,3 +108,7 @@ app.MapDelete("/api/cars/{id}", async (int id, AppDbContext db) =>
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
+
+// ===== 6. Запуск приложения (только в самом конце!) =====
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+app.Run($"http://0.0.0.0:{port}");
