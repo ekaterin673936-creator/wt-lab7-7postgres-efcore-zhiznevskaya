@@ -59,7 +59,7 @@ namespace wt_lab6_6minimalapi_zhiznevskaya.Migrations
                         {
                             Id = 1,
                             Brand = "Toyota",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsAvailable = true,
                             Model = "Camry",
                             PricePerDay = 5000m,
@@ -69,7 +69,7 @@ namespace wt_lab6_6minimalapi_zhiznevskaya.Migrations
                         {
                             Id = 2,
                             Brand = "BMW",
-                            CreatedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsAvailable = true,
                             Model = "X5",
                             PricePerDay = 12000m,
@@ -79,7 +79,7 @@ namespace wt_lab6_6minimalapi_zhiznevskaya.Migrations
                         {
                             Id = 3,
                             Brand = "Volvo",
-                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsAvailable = false,
                             Model = "FH16",
                             PricePerDay = 18000m,
