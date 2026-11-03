@@ -4,16 +4,21 @@ using wt_lab7_7postgres_efcore_zhiznevskaya.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ===== 1. Подключение к PostgreSQL =====
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// ===== ДИАГНОСТИКА (выведет в логи Render, что он видит) =====
+Console.WriteLine("=== ПРОВЕРКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ===");
+Console.WriteLine($"DATABASE_URL (Environment): '{Environment.GetEnvironmentVariable("DATABASE_URL")}'");
+Console.WriteLine($"DATABASE_URL (Configuration): '{builder.Configuration["DATABASE_URL"]}'");
+Console.WriteLine("=======================================");
 
-// Для Render: обработка переменной DATABASE_URL
+// ===== Подключение к PostgreSQL =====
 var databaseUrl = builder.Configuration["DATABASE_URL"] 
                   ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 if (!string.IsNullOrWhiteSpace(databaseUrl))
 {
-    // Преобразуем DATABASE_URL (формат postgres://) в строку подключения для Npgsql
+    Console.WriteLine("Переменная DATABASE_URL найдена! Преобразуем...");
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':', 2);
     
@@ -24,27 +29,31 @@ if (!string.IsNullOrWhiteSpace(databaseUrl))
                        $"Password={Uri.UnescapeDataString(userInfo[1])};" +
                        $"SSL Mode=Disable"; 
 }
+else
+{
+    Console.WriteLine("ВНИМАНИЕ: DATABASE_URL не найдена! Используем локальную строку.");
+}
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
-// ===== 2. Настройка Swagger =====
+// ===== Настройка Swagger =====
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ===== 3. Swagger UI =====
+// ===== Swagger UI =====
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ===== 4. Автоматическое применение миграций при запуске =====
+// ===== Автоматическое применение миграций =====
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
 
-// ===== 5. Эндпоинты =====
+// ===== Эндпоинты =====
 app.MapGet("/", () => "Minimal API работает!");
 
 app.MapGet("/api/info", () => new
@@ -56,14 +65,14 @@ app.MapGet("/api/info", () => new
 
 // ===== Блок 4: CRUD через EF Core =====
 
-// 1. GET /api/cars — получить список всех машин
+// 1. GET /api/cars
 app.MapGet("/api/cars", async (AppDbContext db) =>
 {
     var cars = await db.Cars.ToListAsync();
     return Results.Ok(cars);
 });
 
-// 2. GET /api/cars/{id} — получить одну машину по Id
+// 2. GET /api/cars/{id}
 app.MapGet("/api/cars/{id}", async (int id, AppDbContext db) =>
 {
     var car = await db.Cars.FirstOrDefaultAsync(x => x.Id == id);
@@ -71,7 +80,7 @@ app.MapGet("/api/cars/{id}", async (int id, AppDbContext db) =>
     return Results.Ok(car);
 });
 
-// 3. GET /api/cars/search — поиск по марке (LINQ)
+// 3. GET /api/cars/search
 app.MapGet("/api/cars/search", async (string? search, AppDbContext db) =>
 {
     var query = db.Cars.AsQueryable();
@@ -83,7 +92,7 @@ app.MapGet("/api/cars/search", async (string? search, AppDbContext db) =>
     return Results.Ok(cars);
 });
 
-// 4. POST /api/cars — добавить новую машину
+// 4. POST /api/cars
 app.MapPost("/api/cars", async (Car car, AppDbContext db) =>
 {
     db.Cars.Add(car);
@@ -91,7 +100,7 @@ app.MapPost("/api/cars", async (Car car, AppDbContext db) =>
     return Results.Created($"/api/cars/{car.Id}", car);
 });
 
-// 5. PUT /api/cars/{id} — обновить машину
+// 5. PUT /api/cars/{id}
 app.MapPut("/api/cars/{id}", async (int id, Car updatedCar, AppDbContext db) =>
 {
     var car = await db.Cars.FirstOrDefaultAsync(x => x.Id == id);
@@ -107,7 +116,7 @@ app.MapPut("/api/cars/{id}", async (int id, Car updatedCar, AppDbContext db) =>
     return Results.Ok(car);
 });
 
-// 6. DELETE /api/cars/{id} — удалить машину
+// 6. DELETE /api/cars/{id}
 app.MapDelete("/api/cars/{id}", async (int id, AppDbContext db) =>
 {
     var car = await db.Cars.FirstOrDefaultAsync(x => x.Id == id);
@@ -118,7 +127,6 @@ app.MapDelete("/api/cars/{id}", async (int id, AppDbContext db) =>
     return Results.NoContent();
 });
 
-// ===== 6. Запуск приложения =====
-// На Render приложение должно слушать порт, который передается в переменной PORT
+// ===== Запуск приложения =====
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 app.Run($"http://0.0.0.0:{port}");
